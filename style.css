@@ -234,8 +234,8 @@ body {
 #form-container::-webkit-scrollbar-track { background: transparent; }
 #form-container::-webkit-scrollbar-thumb { background-color: #c1c1c1; border-radius: 10px; }
 
-/* Visualization Area (Unchanged but adapted) */
-.visualization-area {
+/* Main Content Area */
+.main-content {
     flex-grow: 1;
     overflow: auto;
     position: relative;
