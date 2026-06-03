@@ -417,6 +417,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loadingOverlay.style.display = 'flex';
         
+        if (window.innerWidth <= 768 && collapseSidebarBtn) {
+            sidebar.classList.add('collapsed');
+            showSidebarBtn.style.display = 'flex';
+        }
+        
         try {
             const prompt = `You are an expert tutor. Create a detailed mind map for the topic '${topic}' specifically tailored for a student in '${academicClass}'.
 Search the web for the latest syllabus or standard curriculum for this specific class level if needed. Ensure the depth, concepts, and formulas included match this academic level exactly.
@@ -532,6 +537,11 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
     async function handleAiFile(file, key, model) {
         if (!file) return;
         loadingOverlay.style.display = 'flex';
+        
+        if (window.innerWidth <= 768 && collapseSidebarBtn) {
+            sidebar.classList.add('collapsed');
+            showSidebarBtn.style.display = 'flex';
+        }
 
         try {
             let aiPayload = {};
@@ -613,8 +623,8 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
     }
 
     if (window.innerWidth <= 768 && collapseSidebarBtn) {
-        sidebar.classList.add(\'collapsed\');
-        showSidebarBtn.style.display = \'flex\';
+        sidebar.classList.add('collapsed');
+        showSidebarBtn.style.display = 'flex';
     }
 
     // Initial render
