@@ -622,7 +622,7 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
         }
     }
 
-    if (window.innerWidth <= 768 && collapseSidebarBtn) {
+    if (window.innerWidth <= 1024 && collapseSidebarBtn) {
         sidebar.classList.add('collapsed');
         showSidebarBtn.style.display = 'flex';
     }
@@ -637,10 +637,10 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
 
     document.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
             const distance = touchEndX - touchStartX;
-            // Swipe right from left edge to open
-            if (distance > 50 && touchStartX < 50) {
+            // Swipe right to open
+            if (distance > 50) {
                 sidebar.classList.remove('collapsed');
                 showSidebarBtn.style.display = 'none';
             }
