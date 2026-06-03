@@ -275,13 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const node = document.getElementById('mindmap-container');
         node.classList.add('exporting');
         
-        domtoimage.toPng(node, { 
+        domtoimage.toSvg(node, { 
             quality: 1.0,
             style: { background: 'transparent' }
         })
         .then(function (dataUrl) {
             const link = document.createElement('a');
-            link.download = 'mindmap.png';
+            link.download = 'mindmap.svg';
             link.href = dataUrl;
             link.click();
             
