@@ -259,8 +259,7 @@ body {
     padding: 60px; 
     background: transparent; 
     display: inline-block; 
-    /* margin: auto centers it safely when small, but allows full scrolling when large */
-    margin: auto;
+    margin: 0; /* Removed margin: auto to prevent top-cutoff on large maps */
 }
 .mindmap-container.exporting { background: transparent !important; }
 
