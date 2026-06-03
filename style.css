@@ -39,7 +39,7 @@ body {
 
 .app-container {
     display: flex;
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
@@ -47,11 +47,10 @@ body {
 .sidebar {
     width: 340px;
     background-color: white;
-    padding: 24px;
+    padding: 0; /* Let children handle padding */
     border-right: 1px solid #eaeaea;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     box-shadow: 2px 0 10px rgba(0,0,0,0.02);
     z-index: 10;
     transition: margin-left 0.3s ease;
@@ -78,6 +77,14 @@ body {
 .sidebar p {
     font-size: 0.875rem;
     color: var(--gf-text-muted);
+}
+
+/* Tools Container */
+#manual-tools-container, #ai-tools-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
 }
 
 /* Dynamic Form Styles */
@@ -445,7 +452,7 @@ body {
 @media (max-width: 1024px) {
     .sidebar {
         position: absolute;
-        height: 100vh;
+        height: 100dvh;
         width: 100%;
         max-width: 100%;
         z-index: 1000;
