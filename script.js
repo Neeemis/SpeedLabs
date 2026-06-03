@@ -612,6 +612,11 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
         }
     }
 
+    if (window.innerWidth <= 768 && collapseSidebarBtn) {
+        sidebar.classList.add(\'collapsed\');
+        showSidebarBtn.style.display = \'flex\';
+    }
+
     // Initial render
     renderForm();
     renderMindMap();
