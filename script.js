@@ -627,6 +627,31 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
         showSidebarBtn.style.display = 'flex';
     }
 
+    // Mobile Swipe Gestures
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        if (window.innerWidth <= 768) {
+            const distance = touchEndX - touchStartX;
+            // Swipe right from left edge to open
+            if (distance > 50 && touchStartX < 50) {
+                sidebar.classList.remove('collapsed');
+                showSidebarBtn.style.display = 'none';
+            }
+            // Swipe left to close
+            if (distance < -50) {
+                sidebar.classList.add('collapsed');
+                showSidebarBtn.style.display = 'flex';
+            }
+        }
+    }, {passive: true});
+
     // Initial render
     renderForm();
     renderMindMap();
