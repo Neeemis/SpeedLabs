@@ -323,6 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalClass = document.getElementById('modal-class');
     const modalSubject = document.getElementById('modal-subject');
     const modalChapter = document.getElementById('modal-chapter');
+    const modalChapterLabel = document.getElementById('modal-chapter-label');
+    const modalCustomTopic = document.getElementById('modal-custom-topic');
+    const modalDropZone = document.getElementById('modal-drop-zone');
+    const modalFileInput = document.getElementById('modal-file-input');
+    const modalFileName = document.getElementById('modal-file-name');
     const aiFileInput = document.getElementById('ai-file-input');
     const dropZone = document.getElementById('drop-zone');
     
@@ -409,6 +414,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Formula Card Modal Logic
+    
+    // Dynamic Dropdown Logic
+    modalSubject.addEventListener('change', () => {
+        if (modalSubject.value) {
+            modalChapter.style.display = 'none';
+            modalCustomTopic.style.display = 'block';
+            modalChapterLabel.textContent = 'TOPIC';
+        } else {
+            modalChapter.style.display = 'block';
+            modalCustomTopic.style.display = 'none';
+            modalChapterLabel.textContent = 'CHAPTER';
+        }
+    });
+
+    // File Upload Logic
+    modalDropZone.addEventListener('click', () => modalFileInput.click());
+    modalDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        modalDropZone.style.borderColor = '#a7f3d0';
+        modalDropZone.style.backgroundColor = 'rgba(167, 243, 208, 0.1)';
+    });
+    modalDropZone.addEventListener('dragleave', () => {
+        modalDropZone.style.borderColor = '#444';
+        modalDropZone.style.backgroundColor = 'transparent';
+    });
+    modalDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        modalDropZone.style.borderColor = '#444';
+        modalDropZone.style.backgroundColor = 'transparent';
+        if (e.dataTransfer.files.length) {
+            modalFileInput.files = e.dataTransfer.files;
+            modalFileName.textContent = modalFileInput.files[0].name;
+            modalFileName.style.display = 'block';
+        }
+    });
+    modalFileInput.addEventListener('change', () => {
+        if (modalFileInput.files.length) {
+            modalFileName.textContent = modalFileInput.files[0].name;
+            modalFileName.style.display = 'block';
+        }
+    });
+
     const topicPills = document.querySelectorAll('.topic-pill');
     topicPills.forEach(pill => {
         pill.addEventListener('click', () => {
@@ -430,13 +477,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const model = localStorage.getItem('gemini_api_model') || 'gemini-2.5-flash';
         const academicClass = modalClass.value;
         const subject = modalSubject.value;
-        const chapter = modalChapter.value;
+        const chapterOrTopic = modalCustomTopic.style.display === 'block' ? modalCustomTopic.value.trim() : modalChapter.value;
         
         const activeTopics = Array.from(document.querySelectorAll('.topic-pill.active')).map(p => p.textContent);
         
         if (!key) {
             settingsModal.style.display = 'flex';
             alert("Please enter your Gemini API key first.");
+            return;
+        }
+        if (!chapterOrTopic) {
+            alert("Please enter or select a topic.");
             return;
         }
         if (activeTopics.length === 0) {
@@ -457,21 +508,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
+            let extractedText = "";
+            let aiPayload = {};
+            const file = modalFileInput.files[0];
+
+            if (file) {
+                if (file.type === 'application/pdf') {
+                    // Extract text using PDF.js
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    for (let i = 1; i <= Math.min(pdf.numPages, 15); i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        extractedText += pageText + "\n";
+                    }
+                } else if (file.type.startsWith('image/')) {
+                    throw new Error("For this feature, please upload a PDF document.");
+                }
+            }
+
+            let promptContext = "";
+            let tools = [{"googleSearch": {}}];
+            
+            if (extractedText) {
+                promptContext = `\nCRITICAL: You MUST strictly generate the mind map using ONLY the provided document text below. Do NOT hallucinate information outside of this document.\n\n--- DOCUMENT TEXT ---\n${extractedText}\n--- END DOCUMENT TEXT ---\n`;
+                tools = []; // Disable web search if strict document text is provided
+            } else {
+                promptContext = `\nSearch the web for the latest standard curriculum and precise formulas for this specific class level and chapter. Ensure definitions, formulas, and examples are 100% accurate.`;
+            }
+
             const prompt = `You are an expert tutor. Create a highly structured Mind Map representing a "Formula & Concept Card" for a student in '${academicClass}'.
 Subject: ${subject}
-Chapter: ${chapter}
-Topics to include: ${activeTopics.join(', ')}
-
-Search the web for the latest standard curriculum and precise formulas for this specific class level and chapter. Ensure definitions, formulas, and examples are 100% accurate.
-CRITICAL INSTRUCTION: Keep the mind map short, concise, and precise. Limit the depth to a maximum of 3 levels. Do not overwhelm the student with too many nodes. Use bullet points or short phrases. Do not make it too big.
+Topic/Chapter: ${chapterOrTopic}
+Sub-Topics to include: ${activeTopics.join(', ')}
+${promptContext}
+CRITICAL INSTRUCTION: Keep the mind map short, concise, and precise. Limit the depth to a maximum of 3 levels. Do not overwhelm the student with too many nodes. Use bullet points or short phrases. 
+VERY IMPORTANT: The length of any definition or explanation MUST be strictly within 50 words.
 You MUST return ONLY a raw valid JSON object exactly matching this hierarchical format: 
-{ "id": "root", "text": "${chapter}", "level": 0, "children": [ { "id": "node-x", "text": "Formulas", "level": 1, "children": [] } ] }.
+{ "id": "root", "text": "${chapterOrTopic}", "level": 0, "children": [ { "id": "node-x", "text": "Formulas", "level": 1, "children": [] } ] }.
 Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for sub-branches, etc). DO NOT return markdown formatting (no \`\`\`json).`;
 
-            const aiPayload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "tools": [{"googleSearch": {}}] // Enable Web Search Grounding
+            aiPayload = {
+                "contents": [{"parts": [{"text": prompt}]}]
             };
+            
+            if (tools.length > 0) {
+                aiPayload.tools = tools;
+            }
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                 method: 'POST',

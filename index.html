@@ -46,16 +46,6 @@
                             Formula & Concept Generator
                         </button>
                     </div>
-
-                    <div class="ai-section-box" style="margin-top: 16px;">
-                        <h3 style="font-size: 14px; margin-bottom: 8px; font-weight: 600; color: #333;">2. Generate from Document</h3>
-                        <input type="file" id="ai-file-input" accept="image/*,.pdf" style="display: none;">
-                        <div id="drop-zone" class="drop-zone">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px; color: #673ab7;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                            <span><strong>Drag, Drop, or Paste</strong> PDF/Image</span>
-                            <span style="font-size: 12px; color: #666; margin-top: 4px;">or click to browse</span>
-                        </div>
-                    </div>
                 </div>
             </header>
             
@@ -177,19 +167,21 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">CHAPTER</label>
+                    <label id="modal-chapter-label" style="display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">CHAPTER</label>
                     <select id="modal-chapter" class="dark-select">
-                        <option>Separation Methods</option>
-                        <option>Acids, Bases and Salts</option>
-                        <option>Structure of Atom</option>
-                        <option>Thermodynamics</option>
-                        <option>Cell Biology</option>
+                        <option value="">-- Select Chapter --</option>
+                        <option value="Separation Methods">Separation Methods</option>
+                        <option value="Acids, Bases and Salts">Acids, Bases and Salts</option>
+                        <option value="Structure of Atom">Structure of Atom</option>
+                        <option value="Thermodynamics">Thermodynamics</option>
+                        <option value="Cell Biology">Cell Biology</option>
                     </select>
+                    <input type="text" id="modal-custom-topic" class="dark-select" style="display: none;" placeholder="Type custom topic here...">
                 </div>
             </div>
 
             <!-- Topics -->
-            <div style="margin-bottom: 32px;">
+            <div style="margin-bottom: 24px;">
                 <label style="display: block; font-size: 11px; color: #888; margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">TOPICS</label>
                 <div style="display: flex; flex-wrap: wrap; gap: 12px;" id="modal-topics">
                     <button class="topic-pill active">Overview & key concepts</button>
@@ -199,6 +191,17 @@
                     <button class="topic-pill">Common mistakes</button>
                     <button class="topic-pill">Summary</button>
                 </div>
+            </div>
+
+            <!-- File Upload -->
+            <div style="margin-bottom: 32px;">
+                <label style="display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">REFERENCE DOCUMENT (OPTIONAL)</label>
+                <div id="modal-drop-zone" style="border: 2px dashed #444; border-radius: 8px; padding: 20px; text-align: center; color: #888; cursor: pointer; transition: all 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px; color: #a7f3d0;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <div style="font-size: 13px;"><strong>Drag & Drop</strong> or click to upload PDF</div>
+                    <div id="modal-file-name" style="font-size: 11px; color: #a7f3d0; margin-top: 6px; display: none;"></div>
+                </div>
+                <input type="file" id="modal-file-input" accept=".pdf,image/*" style="display: none;">
             </div>
 
             <!-- Generate Button -->
