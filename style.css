@@ -553,3 +553,12 @@ body {
 .dark-generate-btn:active {
     transform: scale(0.98);
 }
+
+/* Solution Text Formatting (Markdown) */
+#solution-text p { margin-bottom: 1em; }
+#solution-text ul, #solution-text ol { margin-bottom: 1em; padding-left: 20px; }
+#solution-text li { margin-bottom: 0.5em; }
+#solution-text strong { color: #fff; }
+#solution-text h1, #solution-text h2, #solution-text h3 { color: #a7f3d0; margin-top: 1.5em; margin-bottom: 0.5em; }
+#solution-text code { background: #333; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+#solution-text pre { background: #111; padding: 12px; border-radius: 8px; overflow-x: auto; }

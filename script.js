@@ -901,6 +901,199 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
         isPanning = false;
     });
 
+    // --- CAMERA AI SOLVER LOGIC ---
+    const openCameraSolverBtn = document.getElementById('open-camera-solver-btn');
+    const cameraSolverModal = document.getElementById('camera-solver-modal');
+    const closeCameraModalBtn = document.getElementById('close-camera-modal');
+    const cameraVideo = document.getElementById('camera-video');
+    const cameraCanvas = document.getElementById('camera-canvas');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    const btnUploadFallback = document.getElementById('btn-upload-fallback');
+    const cameraUploadInput = document.getElementById('camera-upload-input');
+    const btnSolve = document.getElementById('btn-solve');
+    const cameraControls = document.getElementById('camera-controls');
+    const cameraConfirmControls = document.getElementById('camera-confirm-controls');
+    const solutionContainer = document.getElementById('solution-container');
+    const solutionText = document.getElementById('solution-text');
+    const cameraLevelSelect = document.getElementById('camera-level-select');
+    const cameraViewport = document.getElementById('camera-viewport');
+    
+    let cameraStream = null;
+    let capturedBase64 = null;
+    let capturedMimeType = null;
+
+    async function startCamera() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            cameraVideo.srcObject = cameraStream;
+            cameraVideo.style.display = 'block';
+            cameraCanvas.style.display = 'none';
+            cameraControls.style.display = 'flex';
+            cameraConfirmControls.style.display = 'none';
+            solutionContainer.style.display = 'none';
+            cameraViewport.style.display = 'flex';
+        } catch (err) {
+            console.error("Camera access denied or unavailable", err);
+            // Don't alert, let user use upload fallback
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+    }
+
+    if (openCameraSolverBtn) {
+        openCameraSolverBtn.addEventListener('click', () => {
+            cameraSolverModal.style.display = 'flex';
+            startCamera();
+        });
+    }
+
+    if (closeCameraModalBtn) {
+        closeCameraModalBtn.addEventListener('click', () => {
+            cameraSolverModal.style.display = 'none';
+            stopCamera();
+        });
+    }
+
+    if (btnCapture) {
+        btnCapture.addEventListener('click', () => {
+            if (!cameraVideo.videoWidth) return;
+            const context = cameraCanvas.getContext('2d');
+            cameraCanvas.width = cameraVideo.videoWidth;
+            cameraCanvas.height = cameraVideo.videoHeight;
+            context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+            
+            // Get base64 string
+            const dataUrl = cameraCanvas.toDataURL('image/jpeg', 0.8);
+            capturedBase64 = dataUrl.split(',')[1];
+            capturedMimeType = 'image/jpeg';
+            
+            stopCamera();
+            cameraVideo.style.display = 'none';
+            cameraCanvas.style.display = 'block';
+            cameraControls.style.display = 'none';
+            cameraConfirmControls.style.display = 'flex';
+        });
+    }
+
+    if (btnRetake) {
+        btnRetake.addEventListener('click', () => {
+            capturedBase64 = null;
+            startCamera();
+        });
+    }
+
+    if (btnUploadFallback) {
+        btnUploadFallback.addEventListener('click', () => {
+            cameraUploadInput.click();
+        });
+    }
+
+    if (cameraUploadInput) {
+        cameraUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const context = cameraCanvas.getContext('2d');
+                    cameraCanvas.width = img.width;
+                    cameraCanvas.height = img.height;
+                    context.drawImage(img, 0, 0, img.width, img.height);
+                    
+                    capturedBase64 = event.target.result.split(',')[1];
+                    capturedMimeType = file.type;
+                    
+                    stopCamera();
+                    cameraVideo.style.display = 'none';
+                    cameraCanvas.style.display = 'block';
+                    cameraControls.style.display = 'none';
+                    cameraConfirmControls.style.display = 'flex';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (btnSolve) {
+        btnSolve.addEventListener('click', async () => {
+            const key = localStorage.getItem('gemini_api_key');
+            const model = localStorage.getItem('gemini_api_model') || 'gemini-2.5-flash';
+            
+            if (!key) {
+                settingsModal.style.display = 'flex';
+                alert("Please enter your Gemini API key first.");
+                return;
+            }
+            if (!capturedBase64) {
+                alert("Please capture or upload an image first.");
+                return;
+            }
+
+            const level = cameraLevelSelect.value;
+            const originalText = btnSolve.innerHTML;
+            btnSolve.innerHTML = 'Solving...';
+            btnSolve.disabled = true;
+
+            try {
+                const prompt = `You are an expert tutor for a student in '${level}'. The user has provided an image of a question. 
+Please solve the question shown in the image. Provide a highly detailed, step-by-step solution. 
+Ensure the explanation is clear and educational. Use proper markdown for text and LaTeX for any mathematical equations.`;
+
+                const aiPayload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": capturedMimeType, "data": capturedBase64}}
+                        ]
+                    }]
+                };
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(aiPayload)
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const answerText = data.candidates[0].content.parts[0].text;
+                
+                // Hide camera viewport to make room for solution
+                cameraViewport.style.display = 'none';
+                cameraConfirmControls.style.display = 'none';
+                
+                // Render markdown and math
+                solutionContainer.style.display = 'block';
+                if (window.marked) {
+                    solutionText.innerHTML = marked.parse(answerText);
+                } else {
+                    solutionText.innerText = answerText;
+                }
+                
+                if (window.MathJax) {
+                    MathJax.typesetPromise([solutionText]).catch(err => console.error("MathJax error:", err));
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("AI Solver failed. " + err.message);
+            } finally {
+                btnSolve.innerHTML = originalText;
+                btnSolve.disabled = false;
+            }
+        });
+    }
+
     // Initial render
     renderForm();
     renderMindMap();
