@@ -544,6 +544,7 @@ Topic/Chapter: ${chapterOrTopic}
 Sub-Topics to include: ${activeTopics.join(', ')}
 ${promptContext}
 CRITICAL INSTRUCTION: Keep the mind map short, concise, and precise. Limit the depth to a maximum of 3 levels. Do not overwhelm the student with too many nodes. Use bullet points or short phrases. 
+EXTREMELY IMPORTANT: Limit the number of subtopics to a maximum of 2 or 3 per branch. Drastically reduce the overall number of nodes to make the map very short.
 VERY IMPORTANT: The length of any definition or explanation MUST be strictly within 50 words.
 You MUST return ONLY a raw valid JSON object exactly matching this hierarchical format: 
 { "id": "root", "text": "${chapterOrTopic}", "level": 0, "children": [ { "id": "node-x", "text": "Formulas", "level": 1, "children": [] } ] }.
@@ -831,12 +832,21 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
     mainContent.addEventListener('wheel', (e) => {
         // Prevent default browser scrolling
         e.preventDefault();
-        const rect = mainContent.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
         
-        const zoomFactor = Math.exp(e.deltaY * -0.002);
-        zoomTo(currentScale * zoomFactor, mouseX, mouseY);
+        if (e.ctrlKey || e.metaKey) {
+            // Zoom if Ctrl/Cmd is held (or pinch-to-zoom on trackpad)
+            const rect = mainContent.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const zoomFactor = Math.exp(e.deltaY * -0.002);
+            zoomTo(currentScale * zoomFactor, mouseX, mouseY);
+        } else {
+            // Native-like scrolling (panning) with mouse wheel or trackpad scroll
+            panX -= e.deltaX;
+            panY -= e.deltaY;
+            updateTransform();
+        }
     }, { passive: false });
 
     mainContent.addEventListener('mousedown', (e) => {
