@@ -275,6 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const node = document.getElementById('mindmap-container');
         node.classList.add('exporting');
         
+        // Temporarily remove transform for clean 1:1 export
+        const oldTransform = node.style.transform;
+        node.style.transform = 'none';
+        
         domtoimage.toSvg(node, { 
             quality: 1.0,
             style: { background: 'transparent' }
@@ -285,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             link.href = dataUrl;
             link.click();
             
+            node.style.transform = oldTransform;
             node.classList.remove('exporting');
             exportBtn.innerHTML = originalText;
             exportBtn.disabled = false;
@@ -461,6 +466,7 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
             appState = newTree;
             renderForm();
             renderMindMap();
+            if (window.zoomFit) window.zoomFit();
 
         } catch (err) {
             console.error(err);
@@ -652,7 +658,120 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
         }
     }, {passive: true});
 
+    // Zoom and Pan Logic
+    const mainContent = document.getElementById('main-content');
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const zoomFitBtn = document.getElementById('zoom-fit-btn');
+    
+    let currentScale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    // Attach to global window to allow updating from other functions
+    window.zoomFit = function() {
+        setTimeout(() => {
+            const unscaledWidth = document.getElementById('mindmap-container').offsetWidth;
+            const unscaledHeight = document.getElementById('mindmap-container').offsetHeight;
+            const parentWidth = mainContent.offsetWidth;
+            const parentHeight = mainContent.offsetHeight;
+
+            const scaleX = (parentWidth - 60) / unscaledWidth;
+            const scaleY = (parentHeight - 60) / unscaledHeight;
+            currentScale = Math.min(scaleX, scaleY, 1); // Don't zoom in past 100%
+            
+            panX = (parentWidth - unscaledWidth * currentScale) / 2;
+            panY = (parentHeight - unscaledHeight * currentScale) / 2;
+            
+            updateCanvasTransform();
+        }, 50); // wait for render
+    };
+
+    function updateCanvasTransform() {
+        document.getElementById('mindmap-container').style.transform = `translate(${panX}px, ${panY}px) scale(${currentScale})`;
+    }
+
+    function zoomTo(newScale, originX = mainContent.offsetWidth / 2, originY = mainContent.offsetHeight / 2) {
+        const oldScale = currentScale;
+        currentScale = Math.max(0.1, Math.min(newScale, 5));
+        
+        panX = originX - (originX - panX) * (currentScale / oldScale);
+        panY = originY - (originY - panY) * (currentScale / oldScale);
+        updateCanvasTransform();
+    }
+
+    zoomInBtn.addEventListener('click', () => zoomTo(currentScale * 1.3));
+    zoomOutBtn.addEventListener('click', () => zoomTo(currentScale / 1.3));
+    zoomFitBtn.addEventListener('click', window.zoomFit);
+
+    mainContent.addEventListener('wheel', (e) => {
+        // Prevent default browser scrolling
+        e.preventDefault();
+        const rect = mainContent.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomFactor = Math.exp(e.deltaY * -0.002);
+        zoomTo(currentScale * zoomFactor, mouseX, mouseY);
+    }, { passive: false });
+
+    mainContent.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.zoom-controls') || e.target.closest('.icon-btn') || e.target.closest('.sidebar')) return;
+        isPanning = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        mainContent.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        updateCanvasTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isPanning) {
+            isPanning = false;
+            mainContent.style.cursor = 'grab';
+        }
+    });
+
+    // Touch panning for mobile devices
+    let touchStartX_pan = 0;
+    let touchStartY_pan = 0;
+    let initialPanX = 0;
+    let initialPanY = 0;
+
+    mainContent.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.zoom-controls') || e.target.closest('.icon-btn') || e.target.closest('.sidebar')) return;
+        if (e.touches.length === 1) {
+            isPanning = true;
+            touchStartX_pan = e.touches[0].clientX;
+            touchStartY_pan = e.touches[0].clientY;
+            initialPanX = panX;
+            initialPanY = panY;
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isPanning || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - touchStartX_pan;
+        const dy = e.touches[0].clientY - touchStartY_pan;
+        panX = initialPanX + dx;
+        panY = initialPanY + dy;
+        updateCanvasTransform();
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        isPanning = false;
+    });
+
     // Initial render
     renderForm();
     renderMindMap();
+    window.zoomFit();
 });

@@ -88,11 +88,21 @@
         </aside>
 
         <!-- Main Content Area (Mind Map) -->
-        <main class="main-content">
+        <main class="main-content" id="main-content" style="overflow: hidden; cursor: grab;">
             <button id="show-sidebar-btn" class="icon-btn" title="Show Sidebar" style="position: absolute; top: 16px; left: 16px; z-index: 100; display: none; background: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
-            <div id="mindmap-container" class="mindmap">
+            
+            <!-- Zoom Controls -->
+            <div class="zoom-controls" style="position: absolute; bottom: 24px; right: 24px; z-index: 100; display: flex; flex-direction: column; gap: 8px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #eaeaea;">
+                <button id="zoom-in-btn" class="icon-btn" title="Zoom In" style="margin:0; width:36px; height:36px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                <div style="height:1px; background:#eaeaea; width:100%;"></div>
+                <button id="zoom-fit-btn" class="icon-btn" title="Fit to Screen" style="margin:0; width:36px; height:36px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg></button>
+                <div style="height:1px; background:#eaeaea; width:100%;"></div>
+                <button id="zoom-out-btn" class="icon-btn" title="Zoom Out" style="margin:0; width:36px; height:36px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+            </div>
+
+            <div id="mindmap-container" class="mindmap" style="transform-origin: 0 0; transition: transform 0.1s ease-out;">
                 <!-- Mind Map generated here -->
             </div>
         </main>
