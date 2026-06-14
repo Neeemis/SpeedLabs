@@ -314,16 +314,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKeyInput = document.getElementById('api-key-input');
     const modelSelect = document.getElementById('model-select');
     
-    const dropZone = document.getElementById('drop-zone');
-    const aiFileInput = document.getElementById('ai-file-input');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    const aiTopicInput = document.getElementById('ai-topic-input');
-    const aiClassSelect = document.getElementById('ai-class-select');
-    const aiGenerateTopicBtn = document.getElementById('ai-generate-topic-btn');
-
-    const tabManual = document.getElementById('tab-manual');
-    const tabAi = document.getElementById('tab-ai');
+    const openAiGeneratorBtn = document.getElementById('open-ai-generator-btn');
+    const aiGeneratorModal = document.getElementById('ai-generator-modal');
+    const closeAiModalBtn = document.getElementById('close-ai-modal');
+    const modalGenerateBtn = document.getElementById('modal-generate-btn');
+    const modalClass = document.getElementById('modal-class');
+    const modalSubject = document.getElementById('modal-subject');
+    const modalChapter = document.getElementById('modal-chapter');
+    const aiFileInput = document.getElementById('ai-file-input');
+    const dropZone = document.getElementById('drop-zone');
     const manualToolsContainer = document.getElementById('manual-tools-container');
     const aiToolsContainer = document.getElementById('ai-tools-container');
 
@@ -403,35 +404,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Generate by Topic & Class
-    aiGenerateTopicBtn.addEventListener('click', async () => {
+    // Formula Card Modal Logic
+    const topicPills = document.querySelectorAll('.topic-pill');
+    topicPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            pill.classList.toggle('active');
+        });
+    });
+
+    openAiGeneratorBtn.addEventListener('click', () => {
+        aiGeneratorModal.style.display = 'flex';
+    });
+
+    closeAiModalBtn.addEventListener('click', () => {
+        aiGeneratorModal.style.display = 'none';
+    });
+
+    // Generate by Formula Card Form
+    modalGenerateBtn.addEventListener('click', async () => {
         const key = localStorage.getItem('gemini_api_key');
         const model = localStorage.getItem('gemini_api_model') || 'gemini-2.5-flash';
-        const topic = aiTopicInput.value.trim();
-        const academicClass = aiClassSelect.value;
+        const academicClass = modalClass.value;
+        const subject = modalSubject.value;
+        const chapter = modalChapter.value;
+        
+        const activeTopics = Array.from(document.querySelectorAll('.topic-pill.active')).map(p => p.textContent);
         
         if (!key) {
             settingsModal.style.display = 'flex';
             alert("Please enter your Gemini API key first.");
             return;
         }
-        if (!topic) {
-            alert("Please enter a topic to generate.");
+        if (activeTopics.length === 0) {
+            alert("Please select at least one topic.");
             return;
         }
 
+        const originalText = modalGenerateBtn.innerHTML;
+        modalGenerateBtn.innerHTML = 'Generating...';
+        modalGenerateBtn.disabled = true;
+
+        aiGeneratorModal.style.display = 'none';
         loadingOverlay.style.display = 'flex';
         
-        if (window.innerWidth <= 768 && collapseSidebarBtn) {
+        if (window.innerWidth <= 1024 && collapseSidebarBtn) {
             sidebar.classList.add('collapsed');
             showSidebarBtn.style.display = 'flex';
         }
         
         try {
-            const prompt = `You are an expert tutor. Create a detailed mind map for the topic '${topic}' specifically tailored for a student in '${academicClass}'.
-Search the web for the latest syllabus or standard curriculum for this specific class level if needed. Ensure the depth, concepts, and formulas included match this academic level exactly.
-You MUST return ONLY a raw valid JSON object exactly matching this format: 
-{ "id": "root", "text": "Central Topic", "level": 0, "children": [ { "id": "node-x", "text": "Sub topic", "level": 1, "children": [] } ] }.
+            const prompt = `You are an expert tutor. Create a highly detailed and structured Mind Map representing a "Formula & Concept Card" for a student in '${academicClass}'.
+Subject: ${subject}
+Chapter: ${chapter}
+Topics to include: ${activeTopics.join(', ')}
+
+Search the web for the latest standard curriculum and precise formulas for this specific class level and chapter. Ensure definitions, formulas, and examples are 100% accurate.
+You MUST return ONLY a raw valid JSON object exactly matching this hierarchical format: 
+{ "id": "root", "text": "${chapter}", "level": 0, "children": [ { "id": "node-x", "text": "Formulas", "level": 1, "children": [] } ] }.
 Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for sub-branches, etc). DO NOT return markdown formatting (no \`\`\`json).`;
 
             const aiPayload = {
@@ -449,8 +478,8 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
             if (data.error) throw new Error(data.error.message);
 
             let rawJsonStr = data.candidates[0].content.parts[0].text.trim();
-            if (rawJsonStr.startsWith('```')) {
-                rawJsonStr = rawJsonStr.replace(/^```(json)?/, '').replace(/```$/, '').trim();
+            if (rawJsonStr.startsWith('\`\`\`')) {
+                rawJsonStr = rawJsonStr.replace(/^\`\`\`(json)?/, '').replace(/\`\`\`$/, '').trim();
             }
 
             const newTree = JSON.parse(rawJsonStr);
@@ -470,8 +499,11 @@ Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for
 
         } catch (err) {
             console.error(err);
-            alert("Error generating mind map: " + err.message);
+            alert("AI Generation failed. Check your API key or console for details.");
+            aiGeneratorModal.style.display = 'flex';
         } finally {
+            modalGenerateBtn.innerHTML = originalText;
+            modalGenerateBtn.disabled = false;
             loadingOverlay.style.display = 'none';
         }
     });
