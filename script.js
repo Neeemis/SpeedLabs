@@ -457,12 +457,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            const prompt = `You are an expert tutor. Create a highly detailed and structured Mind Map representing a "Formula & Concept Card" for a student in '${academicClass}'.
+            const prompt = `You are an expert tutor. Create a highly structured Mind Map representing a "Formula & Concept Card" for a student in '${academicClass}'.
 Subject: ${subject}
 Chapter: ${chapter}
 Topics to include: ${activeTopics.join(', ')}
 
 Search the web for the latest standard curriculum and precise formulas for this specific class level and chapter. Ensure definitions, formulas, and examples are 100% accurate.
+CRITICAL INSTRUCTION: Keep the mind map short, concise, and precise. Limit the depth to a maximum of 3 levels. Do not overwhelm the student with too many nodes. Use bullet points or short phrases. Do not make it too big.
 You MUST return ONLY a raw valid JSON object exactly matching this hierarchical format: 
 { "id": "root", "text": "${chapter}", "level": 0, "children": [ { "id": "node-x", "text": "Formulas", "level": 1, "children": [] } ] }.
 Ensure all levels are correctly numbered (0 for root, 1 for main branches, 2 for sub-branches, etc). DO NOT return markdown formatting (no \`\`\`json).`;
