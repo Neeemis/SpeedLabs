@@ -325,6 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalChapter = document.getElementById('modal-chapter');
     const aiFileInput = document.getElementById('ai-file-input');
     const dropZone = document.getElementById('drop-zone');
+    
+    const tabManual = document.getElementById('tab-manual');
+    const tabAi = document.getElementById('tab-ai');
+    
     const manualToolsContainer = document.getElementById('manual-tools-container');
     const aiToolsContainer = document.getElementById('ai-tools-container');
 
